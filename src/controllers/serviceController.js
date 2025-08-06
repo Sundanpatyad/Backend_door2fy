@@ -33,6 +33,7 @@ export const addServiceToPlanController = async (req, res) => {
 
 export const bulkAddServicesAllTypesController = async (req, res) => {
   try {
+    ß
     const results = await bulkAddServicesAllTypesService(req.body);
     res.status(STATUS_CODES.CREATED).json({ 
       success: true, 
