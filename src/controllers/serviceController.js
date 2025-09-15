@@ -128,3 +128,4 @@ export const getServicesByCategoryController = async (req, res) => {
     res.status(code).json({ success: false, message: error.message });
   }
 };
+
