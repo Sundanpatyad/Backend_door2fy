@@ -6,6 +6,9 @@ import {
   getServicesByPlanTypeService,
   getServiceByIdService,
   getServicesByCategoryService,
+  createCategoryService,
+  createServicePlanService,
+  getAllCategoryService,
 } from '../services/servicePlanService.js';
 
 export const addServiceToPlanController = async (req, res) => {
@@ -129,3 +132,47 @@ export const getServicesByCategoryController = async (req, res) => {
   }
 };
 
+export const createCategoryController = async (req, res) => {
+  try {
+    const category = await createCategoryService(req.body, req.file);
+    res.status(201).json({
+      success: true,
+      data: category,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ success: false, message: error.message });
+  }
+};
+
+export const createServicePlanController = async (req, res) => {
+  try {
+    const servicePlan = await createServicePlanService(req.body, req.file);
+    res.status(201).json({
+      success: true,
+      data: servicePlan,
+    });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
+      .json({ success: false, message: error.message });
+  }
+};
+
+
+export const getAllCategoryController = async (req, res) => {
+  try {
+    const categories = await getAllCategoryService();
+    res.status(STATUS_CODES.SUCCESS).json({ 
+      success: true, 
+      data: categories, 
+      message: 'All categories retrieved successfully' 
+    });
+  } catch (error) {
+    const code = error.message.includes('not found') 
+      ? STATUS_CODES.NOT_FOUND 
+      : STATUS_CODES.INTERNAL_SERVER_ERROR;
+    res.status(code).json({ success: false, message: error.message });
+  }
+};

@@ -244,6 +244,7 @@ export const getServicesByCategoryRepository = async (categoryId) => {
           $push: {
             serviceId: '$_id',
             name: '$name',
+            image: '$image',
             subtitle: '$subtitle',
             price: '$price',
             features: '$features'
@@ -261,3 +262,32 @@ export const getServicesByCategoryRepository = async (categoryId) => {
     }
   ]);
 };
+
+
+export const createCategoryRepository = async (data) => {
+  try {
+    const category = new Category(data);
+    return await category.save();
+  } catch (error) {
+    if (error.code === 11000) {
+      throw new Error("Category name already exists");
+    }
+    throw error;
+  }
+};
+
+export const createServicePlanRepository = async (data) => {
+  try {
+    const servicePlan = new ServicePlan(data);
+    return await servicePlan.save();
+  } catch (error) {
+    if (error.code === 11000) {
+      throw new Error("Service plan already exists");
+    }
+    throw error;
+  }
+};
+
+export const getAllCategoryRepository = async () => {
+  return Category.find();
+}

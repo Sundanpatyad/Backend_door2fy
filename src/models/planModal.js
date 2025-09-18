@@ -12,4 +12,5 @@ const ServicePlansSchema = new mongoose.Schema({
   collection: 'servicePlans'
 });
 
-export const ServicePlans = mongoose.model('ServicePlans', ServicePlansSchema);
+export const ServicePlans = mongoose.model('ServicePlansType', ServicePlansSchema);
+    

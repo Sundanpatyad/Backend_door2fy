@@ -4,10 +4,14 @@ import {
   getAllServicesRepository,
   getServicesByPlanTypeRepository,
   getServiceByIdRepository,
-  getServicesByCategoryRepository
+  getServicesByCategoryRepository,
+  createCategoryRepository,
+  createServicePlanRepository,
+  getAllCategoryRepository
 } from "../repositories/serviceRepository.js";
 import { Category } from "../models/categoryModal.js";
 import mongoose from 'mongoose';
+import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 
 export const addServiceToPlanService = async (planType, serviceData) => {
   if (!planType || !serviceData) {
@@ -187,4 +191,47 @@ export const getServicesByCategoryService = async (categoryInput) => {
   }
 
   return result;
+};
+
+
+export const createCategoryService = async (data, file) => {
+  let imageUrl = null;
+
+  if (file) {
+    const result = await uploadToCloudinary(file.buffer, "categories");
+    imageUrl = result.url;
+  }
+
+  const category = await createCategoryRepository({
+    ...data,
+    image: imageUrl,
+  });
+
+  return category;
+};
+
+
+export const createServicePlanService = async (data, file) => {
+  let imageUrl = null;
+
+  if (file) {
+    const result = await uploadToCloudinary(file.buffer, "servicePlans");
+    imageUrl = result.url;
+  }
+
+  const servicePlan = await createServicePlanRepository({
+    name: data.name,
+    subtitle: data.subtitle,
+    price: data.price,
+    image: imageUrl,
+    features: data.features,          // expecting array of strings
+    planType: data.planType || null,  // optional
+    category: data.category,          // required
+  });
+
+  return servicePlan;
+};
+
+export const getAllCategoryService = async () => {
+  return getAllCategoryRepository();
 };

@@ -8,13 +8,16 @@ const ServicePlanSchema = new mongoose.Schema({
   },
   subtitle: {
     type: String,
-    required: true,
     trim: true
   },
   price: {
     type: Number,
     required: true,
     min: 0
+  },
+  image: {
+    type: String,
+    trim: true
   },
   features: [{
     type: String,
@@ -23,7 +26,7 @@ const ServicePlanSchema = new mongoose.Schema({
   }],
   planType: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'ServicePlans',
+    ref: 'ServicePlanType',
   },
   category: {
     type: mongoose.Schema.Types.ObjectId,
