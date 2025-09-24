@@ -5,11 +5,20 @@ import serviceRoutes from './routes/serviceRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import connectDB from './config/db.js';
 import dotenv from 'dotenv';
+import {  isFirebaseConnected } from './config/firebase.js';
+
+console.log("Firebase connected:", isFirebaseConnected);
+
 dotenv.config();
 
 connectDB();
 
 const app = express();
+
+if (!isFirebaseConnected) {
+  console.error("Firebase Admin not connected. Exiting server.");
+  process.exit(1);
+}
 
 app.use(express.json());
 app.use(logger);

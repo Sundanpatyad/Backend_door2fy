@@ -1,11 +1,9 @@
 import express from 'express';  
-import { sendOTPController, verifyOTPController } from '../controllers/authController.js';
+import { loginWithFirebase } from '../controllers/authController.js';
 
 const router = express.Router();
 
-
-router.post('/send-otp', sendOTPController);
-router.post('/verify-otp', verifyOTPController);
+router.post("/login", loginWithFirebase);
 
 export default router;
-
+    
