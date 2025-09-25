@@ -291,3 +291,142 @@ export const createServicePlanRepository = async (data) => {
 export const getAllCategoryRepository = async () => {
   return Category.find();
 }
+
+export const bulkImportServices = async (req, res) => {
+  const session = await mongoose.startSession();
+  
+  try {
+    await session.startTransaction();
+    
+    const serviceData = req.body;
+    
+    // Validate input
+    if (!Array.isArray(serviceData) || serviceData.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid data format. Expected array of categories.'
+      });
+    }
+
+    const results = {
+      categoriesCreated: 0,
+      planTypesCreated: 0,
+      servicesCreated: 0,
+      errors: []
+    };
+
+    // Process each category
+    for (const categoryData of serviceData) {
+      try {
+        // Create or find category
+        let category = await Category.findOne({ name: categoryData.name }).session(session);
+        
+        if (!category) {
+          category = new Category({
+            name: categoryData.name,
+            description: categoryData.description || '',
+            image: categoryData.image || ''
+          });
+          await category.save({ session });
+          results.categoriesCreated++;
+        }
+
+        // Process plan types for this category
+        if (categoryData.planTypes && Array.isArray(categoryData.planTypes)) {
+          for (const planTypeData of categoryData.planTypes) {
+            try {
+              // Create or find plan type
+              let planType = await ServicePlans.findOne({ 
+                planType: planTypeData.planType 
+              }).session(session);
+              
+              if (!planType) {
+                planType = new ServicePlans({
+                  planType: planTypeData.planType
+                });
+                await planType.save({ session });
+                results.planTypesCreated++;
+              }
+
+              // Process services for this plan type
+              if (planTypeData.services && Array.isArray(planTypeData.services)) {
+                for (const serviceData of planTypeData.services) {
+                  try {
+                    // Check if service already exists for this category and plan type
+                    const existingService = await ServicePlan.findOne({
+                      name: serviceData.name,
+                      category: category._id,
+                      planType: planType._id
+                    }).session(session);
+
+                    if (!existingService) {
+                      const service = new ServicePlan({
+                        name: serviceData.name,
+                        subtitle: serviceData.subtitle || '',
+                        price: serviceData.price || 0,
+                        image: serviceData.image || '',
+                        features: serviceData.features || [],
+                        planType: planType._id,
+                        category: category._id
+                      });
+                      
+                      await service.save({ session });
+                      results.servicesCreated++;
+                    }
+                  } catch (serviceError) {
+                    results.errors.push({
+                      type: 'service',
+                      category: categoryData.name,
+                      planType: planTypeData.planType,
+                      service: serviceData.name,
+                      error: serviceError.message
+                    });
+                  }
+                }
+              }
+            } catch (planTypeError) {
+              results.errors.push({
+                type: 'planType',
+                category: categoryData.name,
+                planType: planTypeData.planType,
+                error: planTypeError.message
+              });
+            }
+          }
+        }
+      } catch (categoryError) {
+        results.errors.push({
+          type: 'category',
+          category: categoryData.name,
+          error: categoryError.message
+        });
+      }
+    }
+
+    await session.commitTransaction();
+
+    res.status(201).json({
+      success: true,
+      message: 'Bulk import completed successfully',
+      results: {
+        categoriesCreated: results.categoriesCreated,
+        planTypesCreated: results.planTypesCreated,
+        servicesCreated: results.servicesCreated,
+        totalErrors: results.errors.length,
+        errors: results.errors
+      }
+    });
+
+  } catch (error) {
+    await session.abortTransaction();
+    console.error('Bulk import error:', error);
+    
+    res.status(500).json({
+      success: false,
+      message: 'Failed to import data',
+      error: error.message
+    });
+  } finally {
+    await session.endSession();
+  }
+};
