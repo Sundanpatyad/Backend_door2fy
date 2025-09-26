@@ -375,6 +375,11 @@ export const updateServicePlanImages = async (req, res) => {
     const { ids } = req.body;
     const files = req.files;
 
+    if (typeof ids === "string") {
+      ids = JSON.parse(ids);
+    }
+
+
     if (!ids || !Array.isArray(ids) || ids.length !== files.length) {
       return res.status(400).json({ message: "IDs and images must match in length" });
     }
