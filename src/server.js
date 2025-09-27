@@ -7,6 +7,7 @@ import serviceRoutes from './routes/serviceRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import connectDB from './config/db.js';
 import dotenv from 'dotenv';
+import cors from 'cors';
 import { isFirebaseConnected } from './config/firebase.js';
 
 // Load environment variables
@@ -81,6 +82,8 @@ if (cluster.isPrimary) {
   const app = express();
 
   // Middleware
+app.use(cors({ origin: '*', credentials: true }));
+
   app.use(express.json());
   app.use(logger);
 
