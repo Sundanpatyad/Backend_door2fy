@@ -18,6 +18,8 @@ import {
   getAllServicePlans,
   editServicePlan,
   deleteService,
+  deleteCategory,
+  editCategory,
   } from '../controllers/serviceController.js';
 import upload from '../middleware/multer.js';
 import { bulkImportServices } from '../repositories/serviceRepository.js';
@@ -64,5 +66,9 @@ router.get('/allServicesDashboard',   getAllServicePlans);
 router.put('/editServicePlan/:id', upload.single("image"), editServicePlan);
 
 router.delete('/deleteService/:id', deleteService);
+
+router.delete('/deleteCategory/:id', deleteCategory);
+
+router.put('/editCategory/:id', upload.single("image"), editCategory);
 
 export default router;

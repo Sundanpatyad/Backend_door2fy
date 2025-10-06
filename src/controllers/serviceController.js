@@ -587,7 +587,6 @@ export const getAllServicePlans = async (req, res) => {
 };
 
 
-
 export const editServicePlan = async (req, res) => {
   try {
     const { id } = req.params;
@@ -619,7 +618,6 @@ export const editServicePlan = async (req, res) => {
   }
 };
 
-
 export const deleteService = async (req, res) => {
   try {
     const { id } = req.params;
@@ -636,3 +634,98 @@ export const deleteService = async (req, res) => {
     });
   }
 };
+
+export const deleteCategory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedCategory = await Category.findByIdAndDelete(id);
+    return res.status(200).json({ success: true, data: deletedCategory });
+  }
+  catch (error) {
+    console.error("Error deleting category:", error);
+    return res.status(500).json({ message: "Internal server error", error: error.message });
+  }
+};
+
+export const editCategory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const file = req.file;
+    const { name, description } = req.body;
+    
+    // Check if category exists
+    const existingCategory = await Category.findById(id);
+    if (!existingCategory) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "Category not found" 
+      });
+    }
+    
+    // Build update object dynamically
+    const updateData = {};
+    
+    // Handle image upload if file is provided
+    if (file) {
+      const uploadResult = await uploadToCloudinary(file.buffer, "categories");
+      updateData.image = uploadResult.url;
+    }
+    
+    // Add fields to update only if they are provided in request body
+    if (name !== undefined) {
+      updateData.name = name;
+    }
+    if (description !== undefined) {
+      updateData.description = description;
+    }
+    
+    // Check if at least one field is being updated
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "At least one field must be provided for update" 
+      });
+    }
+    
+    // Update the category
+    const updatedCategory = await Category.findByIdAndUpdate(
+      id, 
+      updateData, 
+      { new: true, runValidators: true }
+    );
+    
+    return res.status(200).json({ 
+      success: true, 
+      message: "Category updated successfully",
+      data: updatedCategory 
+    });
+  }
+  catch (error) {
+    console.error("Error editing category:", error);
+    
+    // Handle specific validation errors
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ 
+        success: false,
+        message: "Validation error", 
+        error: error.message 
+      });
+    }
+    
+    // Handle duplicate key error (for unique fields)
+    if (error.code === 11000) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Category name already exists" 
+      });
+    }
+    
+    return res.status(500).json({ 
+      success: false,
+      message: "Internal server error", 
+      error: error.message 
+    });
+  }
+};
+
+
