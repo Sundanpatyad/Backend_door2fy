@@ -62,3 +62,4 @@ export const loginWithFirebase = async (req, res) => {
     return res.status(401).json({ error: "Invalid Firebase token" });
   }
 };
+

@@ -61,14 +61,18 @@ export const bulkAddServicesAllTypesRepository = async (servicesData) => {
 
 export const getAllServicesRepository = async () => {
   return ServicePlan.aggregate([
+    // Join plan type details
     {
       $lookup: {
-        from: 'servicePlans',
+        from: 'plantype', // matches ServicePlans collection
         localField: 'planType',
         foreignField: '_id',
         as: 'planDetails'
       }
     },
+    { $unwind: '$planDetails' },
+
+    // Join category details
     {
       $lookup: {
         from: 'categories',
@@ -77,35 +81,28 @@ export const getAllServicesRepository = async () => {
         as: 'categoryDetails'
       }
     },
+    { $unwind: '$categoryDetails' },
+
+    // Project final structure
     {
-      $unwind: '$planDetails'
-    },
-    {
-      $unwind: '$categoryDetails'
-    },
-    {
-      $group: {
-        _id: null,
-        services: {
-          $push: {
-            serviceId: '$_id',
-            planType: '$planDetails.planType',
-            name: '$name',
-            subtitle: '$subtitle',
-            price: '$price',
-            features: '$features',
-            category: {
-              id: '$categoryDetails._id',
-              name: '$categoryDetails.name',
-              description: '$categoryDetails.description'
-            }
-          }
+      $project: {
+        serviceId: '$_id',
+        name: 1,
+        subtitle: 1,
+        price: 1,
+        features: 1,
+        planType: '$planDetails.planType',
+        category: {
+          id: '$categoryDetails._id',
+          name: '$categoryDetails.name',
+          description: '$categoryDetails.description',
+          image: '$categoryDetails.image'
         }
       }
-    },
-    { $project: { _id: 0, services: 1 } }
+    }
   ]);
 };
+
 
 export const getServicesByPlanTypeRepository = async (planType) => {
   const servicePlan = await ServicePlans.findOne({ planType });

@@ -71,6 +71,115 @@
             ]
           }
         ]
+      },
+      {
+        "planType": "Booking",  
+        "services": [
+          {
+            "name": "Display Issue",
+            "subtitle": "45 mins",
+            "price": 599,
+            "image": "",
+            "features": [
+              "Complete diagnosis to identify the issue before repair",
+              "Final repair cost will be shared after the diagnosis",
+              "The technician inspects your laptop & provides a diagnosis with a repair quote",
+              "Sourcing spare parts (if required) from local market",
+              "Technician hands over the hard disk for data safety & completes the repair",
+              "Thorough cleaning of area & surfaces after repair"
+            ]
+          },
+          {
+            "name": "Keyboard Issue",
+            "subtitle": "25 mins",
+            "price": 499,
+            "image": "",
+            "features": [
+              "Complete diagnosis to identify the issue before repair",
+              "Final repair cost will be shared after the diagnosis",
+              "Professional keyboard repair or replacement",
+              "Data safety ensured during repair process"
+            ]
+          },
+          {
+            "name": "Keyboard Issue",
+            "subtitle": "25 mins",
+            "price": 499,
+            "image": "",
+            "features": [
+              "Complete diagnosis to identify the issue before repair",
+              "Final repair cost will be shared after the diagnosis",
+              "Professional keyboard repair or replacement",
+              "Data safety ensured during repair process"
+            ]
+          },   {
+            "name": "Keyboard Issue",
+            "subtitle": "25 mins",
+            "price": 499,
+            "image": "",
+            "features": [
+              "Complete diagnosis to identify the issue before repair",
+              "Final repair cost will be shared after the diagnosis",
+              "Professional keyboard repair or replacement",
+              "Data safety ensured during repair process"
+            ]
+          },   {
+            "name": "Keyboard Issue",
+            "subtitle": "25 mins",
+            "price": 499,
+            "image": "",
+            "features": [
+              "Complete diagnosis to identify the issue before repair",
+              "Final repair cost will be shared after the diagnosis",
+              "Professional keyboard repair or replacement",
+              "Data safety ensured during repair process"
+            ]
+          },   {
+            "name": "Keyboard Issue",
+            "subtitle": "25 mins",
+            "price": 499,
+            "image": "",
+            "features": [
+              "Complete diagnosis to identify the issue before repair",
+              "Final repair cost will be shared after the diagnosis",
+              "Professional keyboard repair or replacement",
+              "Data safety ensured during repair process"
+            ]
+          },   {
+            "name": "Keyboard Issue",
+            "subtitle": "25 mins",
+            "price": 499,
+            "image": "",
+            "features": [
+              "Complete diagnosis to identify the issue before repair",
+              "Final repair cost will be shared after the diagnosis",
+              "Professional keyboard repair or replacement",
+              "Data safety ensured during repair process"
+            ]
+          },   {
+            "name": "Keyboard Issue",
+            "subtitle": "25 mins",
+            "price": 499,
+            "image": "",
+            "features": [
+              "Complete diagnosis to identify the issue before repair",
+              "Final repair cost will be shared after the diagnosis",
+              "Professional keyboard repair or replacement",
+              "Data safety ensured during repair process"
+            ]
+          },   {
+            "name": "Keyboard Issue",
+            "subtitle": "25 mins",
+            "price": 499,
+            "image": "",
+            "features": [
+              "Complete diagnosis to identify the issue before repair",
+              "Final repair cost will be shared after the diagnosis",
+              "Professional keyboard repair or replacement",
+              "Data safety ensured during repair process"
+            ]
+          }
+        ]
       }
     ]
   },
