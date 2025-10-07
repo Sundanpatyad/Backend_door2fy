@@ -210,7 +210,7 @@ export const getServicesByCategoryRepository = async (categoryId) => {
     },
     {
       $lookup: {
-        from: 'servicePlans',
+        from: 'plantype', // Correct collection name
         localField: 'planType',
         foreignField: '_id',
         as: 'planDetails'
@@ -232,7 +232,7 @@ export const getServicesByCategoryRepository = async (categoryId) => {
     },
     {
       $group: {
-        _id: '$planDetails.planType',
+        _id: '$planDetails.planType', // Group by planType string ('Booking' or 'Quick')
         category: {
           $first: {
             id: '$categoryDetails._id',

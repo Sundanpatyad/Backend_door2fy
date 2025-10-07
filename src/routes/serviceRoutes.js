@@ -11,7 +11,16 @@ import {
   getAllCategoryController,
   updateCategoryImages,
   updateServicePlanImages,
-} from '../controllers/serviceController.js';
+  createServicePlanType,
+  createServicePlan,
+  createCategory,
+  getPlanTypes,
+  getAllServicePlans,
+  editServicePlan,
+  deleteService,
+  deleteCategory,
+  editCategory,
+  } from '../controllers/serviceController.js';
 import upload from '../middleware/multer.js';
 import { bulkImportServices } from '../repositories/serviceRepository.js';
 
@@ -44,6 +53,22 @@ router.put("/categories/images", upload.array("images"), updateCategoryImages);
 // Multiple service plans update
 router.put("/servicePlans/images", upload.array("images"), updateServicePlanImages);
 
+router.post('/createServicePlanType', createServicePlanType);
 
+router.post('/createServicePlan', upload.single("image"), createServicePlan);
+
+router.post('/createCategory', upload.single("image"), createCategory);
+
+router.get('/planTypes', getPlanTypes);
+
+router.get('/allServicesDashboard',   getAllServicePlans);
+
+router.put('/editServicePlan/:id', upload.single("image"), editServicePlan);
+
+router.delete('/deleteService/:id', deleteService);
+
+router.delete('/deleteCategory/:id', deleteCategory);
+
+router.put('/editCategory/:id', upload.single("image"), editCategory);
 
 export default router;

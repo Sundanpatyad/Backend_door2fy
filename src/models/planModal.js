@@ -9,8 +9,8 @@ const ServicePlansSchema = new mongoose.Schema({
   },
 }, {
   timestamps: true,
-  collection: 'servicePlans'
+  collection: 'plantype'
 });
 
-export const ServicePlans = mongoose.model('ServicePlans', ServicePlansSchema);
+export const ServicePlans = mongoose.model('plantype', ServicePlansSchema);
     

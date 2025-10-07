@@ -13,6 +13,8 @@ import {
  import {Category} from "../models/categoryModal.js"
 import { uploadToCloudinary } from '../utils/uploadToCloudinary.js';
 import { ServicePlan } from '../models/serviceModal.js';
+import { ServicePlans } from '../models/planModal.js';
+ 
 
 
 export const addServiceToPlanController = async (req, res) => {
@@ -405,3 +407,325 @@ export const updateServicePlanImages = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+
+export const createCategory = async (req, res) => {
+  try {
+    const { name, description } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ message: "Category name is required" });
+    }
+
+    let imageUrl = null;
+
+    // Upload image to Cloudinary using the utility function
+    if (req.file) {
+      const uploadResult = await uploadToCloudinary(req.file.buffer, "categories");
+      imageUrl = uploadResult.url;
+    }
+
+    const category = await Category.create({
+      name,
+      description,
+      image: imageUrl,
+    });
+
+    return res.status(201).json({
+      message: "Category created successfully",
+      data: category,
+    });
+  } catch (error) {
+    console.error("Error creating category:", error);
+    return res.status(500).json({ 
+      message: "Internal server error", 
+      error: error.message 
+    });
+  }
+};
+
+export const createServicePlan = async (req, res) => {
+  try {
+    const { name, subtitle, price, features, planType, category } = req.body;
+
+    if (!name || !price || !planType || !category) {
+      return res.status(400).json({
+        message: "Name, price, planType, and category are required",
+      });
+    }
+
+    let imageUrl = null;
+
+    // Upload image to Cloudinary using the utility function
+    if (req.file) {
+      const uploadResult = await uploadToCloudinary(req.file.buffer, "servicePlans");
+      imageUrl = uploadResult.url;
+    }
+
+    const parsedFeatures = features ? JSON.parse(features) : [];
+
+    const newServicePlan = await ServicePlan.create({
+      name,
+      subtitle,
+      price,
+      image: imageUrl,
+      features: parsedFeatures,
+      planType,
+      category,
+    });
+
+    return res.status(201).json({
+      message: "Service plan created successfully",
+      data: newServicePlan,
+    });
+  } catch (error) {
+    console.error("Error creating service plan:", error);
+    return res.status(500).json({ 
+      message: "Internal server error", 
+      error: error.message 
+    });
+  }
+};
+
+export const createServicePlanType = async (req, res) => {
+  try {
+    const { planType } = req.body;
+
+    if (!planType) {
+      return res.status(400).json({ message: "Plan type is required" });
+    }
+
+    const validTypes = ["Booking", "Quick"];
+    if (!validTypes.includes(planType)) {
+      return res.status(400).json({ 
+        message: "Invalid plan type. Use 'Booking' or 'Quick'." 
+      });
+    }
+
+    const existing = await ServicePlans.findOne({ planType });
+    if (existing) {
+      return res.status(400).json({ message: "Plan type already exists" });
+    }
+
+    const newPlanType = await ServicePlans.create({ planType });
+
+    return res.status(201).json({
+      message: "Service plan type created successfully",
+      data: newPlanType,
+    });
+  } catch (error) {
+    console.error("Error creating service plan type:", error);
+    return res.status(500).json({ 
+      message: "Internal server error", 
+      error: error.message 
+    });
+  }
+};
+
+
+export const getPlanTypes = async (req, res) => {
+  try {
+    const planTypes = await ServicePlans.find();
+    res.status(200).json({ success: true, data: planTypes });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+// controllers/servicePlanController.js
+
+export const getAllServicePlans = async (req, res) => {
+  try {
+    const servicePlans = await ServicePlan.aggregate([
+      // Lookup for category details
+      {
+        $lookup: {
+          from: 'categories', // collection name in MongoDB
+          localField: 'category',
+          foreignField: '_id',
+          as: 'categoryDetails'
+        }
+      },
+      {
+        $unwind: '$categoryDetails' // assuming each plan has 1 category
+      },
+      // Lookup for planType details
+      {
+        $lookup: {
+          from: 'plantype', // collection name for ServicePlanType (adjust if different)
+          localField: 'planType',
+          foreignField: '_id',
+          as: 'planTypeDetails'
+        }
+      },
+      {
+        $unwind: {
+          path: '$planTypeDetails',
+          preserveNullAndEmptyArrays: true // some plans may not have planType
+        }
+      },
+      // Project desired fields
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          subtitle: 1,
+          price: 1,
+          image: 1,
+          features: 1,
+          category: '$categoryDetails',
+          planType: '$planTypeDetails'
+        }
+      }
+    ]);
+
+    res.status(200).json({ success: true, data: servicePlans });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
+
+export const editServicePlan = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, subtitle, price, features, planType, category } = req.body;
+    const file = req.file;
+    let imageUrl = null;
+
+    if (file) {
+      const uploadResult = await uploadToCloudinary(file.buffer, "servicePlans");
+      imageUrl = uploadResult.url;
+    }
+
+    const updatedServicePlan = await ServicePlan.findByIdAndUpdate(
+      id,
+      { name, subtitle, price, features, planType, category, image: imageUrl },
+      { new: true }
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: updatedServicePlan,
+    });
+  } catch (error) {
+    console.error("Error updating service plan:", error);
+    return res.status(500).json({ 
+      message: "Internal server error", 
+      error: error.message 
+    });
+  }
+};
+
+export const deleteService = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedServicePlan = await ServicePlan.findByIdAndDelete(id);
+    return res.status(200).json({
+      success: true,
+      data: deletedServicePlan,
+    });
+  } catch (error) {
+    console.error("Error deleting service plan:", error);
+    return res.status(500).json({ 
+      message: "Internal server error", 
+      error: error.message 
+    });
+  }
+};
+
+export const deleteCategory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedCategory = await Category.findByIdAndDelete(id);
+    return res.status(200).json({ success: true, data: deletedCategory });
+  }
+  catch (error) {
+    console.error("Error deleting category:", error);
+    return res.status(500).json({ message: "Internal server error", error: error.message });
+  }
+};
+
+export const editCategory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const file = req.file;
+    const { name, description } = req.body;
+    
+    // Check if category exists
+    const existingCategory = await Category.findById(id);
+    if (!existingCategory) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "Category not found" 
+      });
+    }
+    
+    // Build update object dynamically
+    const updateData = {};
+    
+    // Handle image upload if file is provided
+    if (file) {
+      const uploadResult = await uploadToCloudinary(file.buffer, "categories");
+      updateData.image = uploadResult.url;
+    }
+    
+    // Add fields to update only if they are provided in request body
+    if (name !== undefined) {
+      updateData.name = name;
+    }
+    if (description !== undefined) {
+      updateData.description = description;
+    }
+    
+    // Check if at least one field is being updated
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "At least one field must be provided for update" 
+      });
+    }
+    
+    // Update the category
+    const updatedCategory = await Category.findByIdAndUpdate(
+      id, 
+      updateData, 
+      { new: true, runValidators: true }
+    );
+    
+    return res.status(200).json({ 
+      success: true, 
+      message: "Category updated successfully",
+      data: updatedCategory 
+    });
+  }
+  catch (error) {
+    console.error("Error editing category:", error);
+    
+    // Handle specific validation errors
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ 
+        success: false,
+        message: "Validation error", 
+        error: error.message 
+      });
+    }
+    
+    // Handle duplicate key error (for unique fields)
+    if (error.code === 11000) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Category name already exists" 
+      });
+    }
+    
+    return res.status(500).json({ 
+      success: false,
+      message: "Internal server error", 
+      error: error.message 
+    });
+  }
+};
+
+
