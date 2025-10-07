@@ -126,10 +126,11 @@ export const bulkAddServicesAllTypesService = async (servicesData) => {
 
 export const getAllServicesService = async () => {
   const result = await getAllServicesRepository();
-  if (!result || result.length === 0 || !result[0].services) {
+  console.log(result , "result");
+  if (!result || result.length === 0 || !result) {
     throw new Error('No services found');
   }
-  return result[0].services;
+  return result;
 };
 
 export const getServicesByPlanTypeService = async (planType) => {
