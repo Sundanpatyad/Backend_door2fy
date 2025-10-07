@@ -1,5 +1,47 @@
 import mongoose from 'mongoose';
 
+const ServiceItemSchema = new mongoose.Schema({
+  id: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  name: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  price: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  quantity: {
+    type: Number,
+    default: 1
+  },
+  image: {
+    type: String,
+    default: null
+  }
+}, { _id: false });
+
+const BookingDetailsSchema = new mongoose.Schema({
+  date: {
+    type: String,
+    trim: true
+  },
+  time: {
+    type: String,
+    trim: true
+  },
+  address: {
+    type: String,
+    trim: true
+  },
+  services: [ServiceItemSchema]
+}, { _id: false });
+
 const OrderSchema = new mongoose.Schema({
   orderId: {
     type: String,
@@ -43,6 +85,12 @@ const OrderSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  orderStatus: {
+    type: String,
+    trim: true,
+    enum: ['Upcoming', 'Completed', 'Cancelled'],
+    default: 'Upcoming'
+  },
   razorpaySignature: {
     type: String,
     trim: true
@@ -62,6 +110,7 @@ const OrderSchema = new mongoose.Schema({
       trim: true
     }
   },
+  bookingDetails: BookingDetailsSchema, // ✅ Added
   notes: {
     type: Map,
     of: String

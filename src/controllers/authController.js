@@ -17,7 +17,7 @@ export const loginWithFirebase = async (req, res) => {
     const uid = decoded.uid;
     const phoneNumber = userRecord.phoneNumber || decoded.phone_number;
     const email = userRecord.email || decoded.email || `${uid}@autogen.com`;
-    const displayName = userRecord.displayName || "John Doe";
+    const displayName = userRecord.displayName || "NO NAME";
 
     // Split displayName
     const [firstName, ...lastNameParts] = displayName.split(" ");
@@ -29,8 +29,7 @@ export const loginWithFirebase = async (req, res) => {
     if (!user) {
       user = new User({
         uid,
-        firstName,
-        lastName,
+        name: displayName,
         mobile: phoneNumber,
         email,
         password: uid, // dummy password for OTP login
@@ -60,6 +59,37 @@ export const loginWithFirebase = async (req, res) => {
   } catch (err) {
     console.error("Login error:", err);
     return res.status(401).json({ error: "Invalid Firebase token" });
+  }
+};
+ export const updateName = async (req, res) => {
+  try {
+    console.log(req.user, 'req.user');
+    const { name } = req.body;
+    console.log(name, 'name');
+    const user = await User.findByIdAndUpdate(req.user.id, { name }, { new: true });
+    console.log(user, 'user');
+    
+    // Return full user details
+    return res.json({ 
+      message: "Name updated successfully", 
+      user: {
+        _id: user._id,
+        uid: user.uid,
+        name: user.name,
+        mobile: user.mobile,
+        email: user.email,
+        userType: user.userType,
+        role: user.role,
+        company: user.company,
+        address: user.address,
+        status: user.status,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
+      }
+    });
+  } catch (err) {
+    console.error("Update name error:", err);
+    return res.status(400).json({ error: "Failed to update name" });
   }
 };
 

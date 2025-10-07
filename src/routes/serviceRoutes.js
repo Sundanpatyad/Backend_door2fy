@@ -20,9 +20,11 @@ import {
   deleteService,
   deleteCategory,
   editCategory,
+  getUserOrders,
   } from '../controllers/serviceController.js';
 import upload from '../middleware/multer.js';
 import { bulkImportServices } from '../repositories/serviceRepository.js';
+import { authenticate } from '../middleware/authMiddleWare.js';
 
 const router = express.Router();
 
@@ -70,5 +72,7 @@ router.delete('/deleteService/:id', deleteService);
 router.delete('/deleteCategory/:id', deleteCategory);
 
 router.put('/editCategory/:id', upload.single("image"), editCategory);
+
+router.get('/userOrders', authenticate, getUserOrders);
 
 export default router;

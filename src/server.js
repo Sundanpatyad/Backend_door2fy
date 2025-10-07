@@ -5,6 +5,7 @@ import config from './config/config.js';
 import logger from './middleware/logger.js';
 import serviceRoutes from './routes/serviceRoutes.js';
 import authRoutes from './routes/authRoutes.js';
+import paymentRoutes from './routes/paymentRoutes.js';
 import connectDB from './config/db.js';
 import dotenv from 'dotenv';
 import cors from 'cors';
@@ -89,6 +90,7 @@ app.use(cors({ origin: '*', credentials: true }));
 
   // Routes
   app.use('/api/services', serviceRoutes);
+  app.use('/api/payment', paymentRoutes);
   app.use('/api/auth', authRoutes);
 
   app.get('/', (req, res) => {
