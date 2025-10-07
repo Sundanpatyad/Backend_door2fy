@@ -14,6 +14,7 @@ import {
 import { uploadToCloudinary } from '../utils/uploadToCloudinary.js';
 import { ServicePlan } from '../models/serviceModal.js';
 import { ServicePlans } from '../models/planModal.js';
+import { Order } from '../models/orderSchema.js';
  
 
 
@@ -729,4 +730,48 @@ export const editCategory = async (req, res) => {
   }
 };
 
+export const getUserOrders = async (req, res) => {
+    try {
+      const userId = req.user.id; 
+      
+      const orders = await Order.find({ userId })
+      .populate({
+        path: 'servicePlan',
+        select: 'name subtitle price image features category',
+        populate: {
+          path: 'category',
+          select: 'name description image'
+        }
+      })
+      .sort({ createdAt: -1 }) // Sort by newest first
+      .lean();
+       console.log(orders, 'orders');
+
+    // Check if user has any orders
+    if (!orders || orders.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: 'No orders found',
+        data: [],
+        count: 0
+      });
+    }
+
+    // Return orders with success response
+    return res.status(200).json({
+      success: true,
+      message: 'Orders retrieved successfully',
+      data: orders,
+      count: orders.length
+    });
+
+  } catch (error) {
+    console.error('Error fetching user orders:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve orders',
+      error: error.message
+    });
+  }
+};
 

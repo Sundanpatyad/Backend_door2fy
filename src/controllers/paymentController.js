@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import razorpay from '../config/razorpay';
+import razorpay from '../config/razorpay.js';
 import { ServicePlan } from '../models/serviceModal.js';
 import { Order } from '../models/orderSchema.js';
 import { Payment } from '../models/paymentSchema.js';
@@ -9,47 +9,45 @@ import { Payment } from '../models/paymentSchema.js';
 export const createCheckoutSession = async (req, res) => {
   try {
     const { servicePlanId, customerDetails } = req.body;
-    const userId = req.user.id; // Assuming you have auth middleware
+    const userId = req.user.id; // Assuming auth middleware attaches req.user
 
-    // Validate input
     if (!servicePlanId || !customerDetails) {
       return res.status(400).json({
         success: false,
-        message: 'Service plan ID and customer details are required'
+        message: 'Service plan ID and customer details are required',
       });
     }
 
-    // Fetch service plan details
+    // Fetch the service plan details
     const servicePlan = await ServicePlan.findById(servicePlanId).populate('category');
-    
     if (!servicePlan) {
       return res.status(404).json({
         success: false,
-        message: 'Service plan not found'
+        message: 'Service plan not found',
       });
     }
 
-    // Generate unique order ID
+    // Generate unique IDs
     const orderId = `ORD_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const receipt = `receipt_${Date.now()}`;
 
     // Create Razorpay order
     const razorpayOrder = await razorpay.orders.create({
-      amount: servicePlan.price * 100, // Amount in paise
+      amount: servicePlan.price * 100,
       currency: 'INR',
-      receipt: receipt,
+      receipt,
       notes: {
-        orderId: orderId,
-        servicePlanId: servicePlanId,
+        orderId,
+        servicePlanId,
         servicePlanName: servicePlan.name,
-        userId: userId.toString()
-      }
+        userId: userId.toString(),
+      },
     });
 
-    // Create order in database
+    // Create order entry in MongoDB
     const order = await Order.create({
-      orderId: orderId,
-      userId: userId,
+      orderId,
+      userId,
       servicePlan: servicePlanId,
       amount: servicePlan.price,
       currency: 'INR',
@@ -58,13 +56,12 @@ export const createCheckoutSession = async (req, res) => {
       customerDetails: {
         name: customerDetails.name,
         email: customerDetails.email,
-        phone: customerDetails.phone
+        phone: customerDetails.phone,
       },
-      receipt: receipt,
-      notes: razorpayOrder.notes
+      receipt,
+      notes: razorpayOrder.notes,
     });
 
-    // Return checkout session data for React Native
     return res.status(201).json({
       success: true,
       message: 'Checkout session created successfully',
@@ -78,41 +75,43 @@ export const createCheckoutSession = async (req, res) => {
           id: servicePlan._id,
           name: servicePlan.name,
           price: servicePlan.price,
-          category: servicePlan.category.name
+          category: servicePlan.category?.name,
         },
         customerDetails: order.customerDetails,
-        receipt: receipt
-      }
+        receipt,
+      },
     });
-
   } catch (error) {
     console.error('Create checkout session error:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to create checkout session',
-      error: error.message
+      error: error.message,
     });
   }
 };
 
-// Verify Payment
+// ----------------------
+// VERIFY PAYMENT
+// ----------------------
 export const verifyPayment = async (req, res) => {
   try {
     const {
       razorpay_order_id,
       razorpay_payment_id,
-      razorpay_signature
+      razorpay_signature,
+      orderId,
+      bookingDetails,
     } = req.body;
 
-    // Validate input
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !orderId) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required payment parameters'
+        message: 'Missing required payment parameters',
       });
     }
 
-    // Verify signature
+    // 1️⃣ Verify Razorpay signature
     const sign = razorpay_order_id + '|' + razorpay_payment_id;
     const expectedSign = crypto
       .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
@@ -120,31 +119,33 @@ export const verifyPayment = async (req, res) => {
       .digest('hex');
 
     if (razorpay_signature !== expectedSign) {
-      // Update order status to failed
       await Order.findOneAndUpdate(
         { razorpayOrderId: razorpay_order_id },
-        {
-          status: 'failed',
-          failureReason: 'Invalid signature'
-        }
+        { status: 'failed', failureReason: 'Invalid signature' }
       );
 
       return res.status(400).json({
         success: false,
-        message: 'Payment verification failed - Invalid signature'
+        message: 'Payment verification failed - Invalid signature',
       });
     }
 
-    // Fetch payment details from Razorpay
+    // 2️⃣ Fetch payment details from Razorpay
     const paymentDetails = await razorpay.payments.fetch(razorpay_payment_id);
 
-    // Update order in database
+    // 3️⃣ Update the corresponding order
     const order = await Order.findOneAndUpdate(
       { razorpayOrderId: razorpay_order_id },
       {
         status: 'paid',
         razorpayPaymentId: razorpay_payment_id,
-        razorpaySignature: razorpay_signature
+        razorpaySignature: razorpay_signature,
+        bookingDetails: {
+          date: bookingDetails?.date || '',
+          time: bookingDetails?.time || '',
+          address: bookingDetails?.address || '',
+          services: bookingDetails?.services || [],
+        },
       },
       { new: true }
     ).populate('servicePlan');
@@ -152,11 +153,11 @@ export const verifyPayment = async (req, res) => {
     if (!order) {
       return res.status(404).json({
         success: false,
-        message: 'Order not found'
+        message: 'Order not found',
       });
     }
 
-    // Create payment record
+    // 4️⃣ Create a payment record (optional but useful for analytics)
     const payment = await Payment.create({
       paymentId: `PAY_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       orderId: order._id,
@@ -173,29 +174,29 @@ export const verifyPayment = async (req, res) => {
       vpa: paymentDetails.vpa || null,
       email: paymentDetails.email,
       contact: paymentDetails.contact,
-      fee: paymentDetails.fee / 100 || 0,
-      tax: paymentDetails.tax / 100 || 0,
-      capturedAt: paymentDetails.captured ? new Date() : null
+      fee: paymentDetails.fee ? paymentDetails.fee / 100 : 0,
+      tax: paymentDetails.tax ? paymentDetails.tax / 100 : 0,
+      capturedAt: paymentDetails.captured ? new Date() : null,
     });
 
     return res.status(200).json({
       success: true,
-      message: 'Payment verified successfully',
+      message: 'Payment verified and booking confirmed successfully',
       data: {
         orderId: order.orderId,
         paymentId: payment.paymentId,
         amount: order.amount,
         status: order.status,
-        servicePlan: order.servicePlan
-      }
+        bookingDetails: order.bookingDetails,
+        servicePlan: order.servicePlan,
+      },
     });
-
   } catch (error) {
     console.error('Verify payment error:', error);
     return res.status(500).json({
       success: false,
       message: 'Payment verification failed',
-      error: error.message
+      error: error.message,
     });
   }
 };

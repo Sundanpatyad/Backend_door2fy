@@ -1,4 +1,6 @@
 import express from 'express';
+import { authenticate } from '../middleware/authMiddleWare.js';
+import { createCheckoutSession, verifyPayment, getOrderStatus, getUserOrders, handleRazorpayWebhook } from '../controllers/paymentController.js';
 
 const router = express.Router();
 
