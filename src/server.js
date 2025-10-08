@@ -10,7 +10,7 @@ import connectDB from './config/db.js';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import { isFirebaseConnected } from './config/firebase.js';
-
+import engineerRoutes from './routes/engineerRoutes.js';
 // Load environment variables
 dotenv.config();
 
@@ -92,7 +92,7 @@ app.use(cors({ origin: '*', credentials: true }));
   app.use('/api/services', serviceRoutes);
   app.use('/api/payment', paymentRoutes);
   app.use('/api/auth', authRoutes);
-
+  app.use('/api/engineer', engineerRoutes);
   app.get('/', (req, res) => {
     res.send(`Node.js Backend is running! Worker PID: ${process.pid}`);
   });
