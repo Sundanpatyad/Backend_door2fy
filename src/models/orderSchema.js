@@ -91,6 +91,11 @@ const OrderSchema = new mongoose.Schema({
     enum: ['Upcoming', 'Completed', 'Cancelled'],
     default: 'Upcoming'
   },
+  assignedEngineer: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Engineer',
+    default: null
+  },
   razorpaySignature: {
     type: String,
     trim: true
