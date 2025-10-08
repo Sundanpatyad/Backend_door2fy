@@ -90,6 +90,7 @@ export const getAllServicesRepository = async () => {
         name: 1,
         subtitle: 1,
         price: 1,
+        image: 1,
         features: 1,
         featuresFormatted: 1,
         planType: '$planDetails.planType',
