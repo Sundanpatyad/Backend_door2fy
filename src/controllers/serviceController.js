@@ -465,6 +465,11 @@ export const createServicePlan = async (req, res) => {
     }
 
     const parsedFeatures = features ? JSON.parse(features) : [];
+    
+    // Format features with bullet points
+    const featuresFormatted = parsedFeatures.map(feature => 
+      feature.startsWith('•') ? feature : `• ${feature}`
+    );
 
     const newServicePlan = await ServicePlan.create({
       name,
@@ -472,6 +477,7 @@ export const createServicePlan = async (req, res) => {
       price,
       image: imageUrl,
       features: parsedFeatures,
+      featuresFormatted,
       planType,
       category,
     });
@@ -575,6 +581,7 @@ export const getAllServicePlans = async (req, res) => {
           price: 1,
           image: 1,
           features: 1,
+          featuresFormatted: 1,
           category: '$categoryDetails',
           planType: '$planTypeDetails'
         }
@@ -594,16 +601,30 @@ export const editServicePlan = async (req, res) => {
     const { id } = req.params;
     const { name, subtitle, price, features, planType, category } = req.body;
     const file = req.file;
-    let imageUrl = null;
-
+    
+    // Prepare update object
+    const updateData = { name, subtitle, price, features, planType, category };
+    
+    // Format features with bullet points if features are provided
+    if (features) {
+      const parsedFeatures = JSON.parse(features);
+      const featuresFormatted = parsedFeatures.map(feature => 
+        feature.startsWith('•') ? feature : `• ${feature}`
+      );
+      updateData.features = parsedFeatures;
+      updateData.featuresFormatted = featuresFormatted;
+    }
+    
+    // Only update image if a new file is provided
     if (file) {
       const uploadResult = await uploadToCloudinary(file.buffer, "servicePlans");
-      imageUrl = uploadResult.url;
+      updateData.image = uploadResult.url;
     }
+    // If no file provided, image field is not included in updateData, so existing image is preserved
 
     const updatedServicePlan = await ServicePlan.findByIdAndUpdate(
       id,
-      { name, subtitle, price, features, planType, category, image: imageUrl },
+      updateData,
       { new: true }
     );
 
@@ -731,10 +752,11 @@ export const editCategory = async (req, res) => {
 };
 
 export const getUserOrders = async (req, res) => {
-    try {
-      const userId = req.user.id; 
-      
-      const orders = await Order.find({ userId })
+  try {
+    const userId = req.user.id;
+
+    // Fetch only paid orders
+    const orders = await Order.find()
       .populate({
         path: 'servicePlan',
         select: 'name subtitle price image features category',
@@ -743,24 +765,23 @@ export const getUserOrders = async (req, res) => {
           select: 'name description image'
         }
       })
-      .sort({ createdAt: -1 }) // Sort by newest first
+      .sort({ createdAt: -1 }) // Newest first
       .lean();
-       console.log(orders, 'orders');
 
-    // Check if user has any orders
+    // Check if any orders found
     if (!orders || orders.length === 0) {
       return res.status(200).json({
         success: true,
-        message: 'No orders found',
+        message: 'No paid orders found',
         data: [],
         count: 0
       });
     }
 
-    // Return orders with success response
+    // Return orders
     return res.status(200).json({
       success: true,
-      message: 'Orders retrieved successfully',
+      message: 'Paid orders retrieved successfully',
       data: orders,
       count: orders.length
     });
@@ -769,9 +790,112 @@ export const getUserOrders = async (req, res) => {
     console.error('Error fetching user orders:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to retrieve orders',
+      message: 'Failed to retrieve user orders',
       error: error.message
     });
   }
 };
 
+export const getAllBookings = async (req, res) => {
+  try {
+    const orders = await Order.find()
+      .populate({
+        path: 'servicePlan',
+        select: 'name subtitle price image features category',
+        populate: {
+          path: 'category',
+          select: 'name description image'
+        }
+      })
+      .sort({ createdAt: -1 }) // Newest first
+      .lean();  
+
+    // Check if any orders found
+    if (!orders || orders.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: 'No paid orders found',
+        data: [],
+        count: 0
+      });
+    }
+
+    // Return orders
+    return res.status(200).json({
+      success: true,
+      message: 'Paid orders retrieved successfully',
+      data: orders,
+      count: orders.length
+    });
+
+  } catch (error) {
+    console.error('Error fetching user orders:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve user orders',
+      error: error.message
+    });
+  }
+};
+
+
+export const updateOrderStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    console.log(id , "id");
+    console.log(status , "status");
+    
+    // Update the order status
+    const updatedOrder = await Order.findByIdAndUpdate(
+      id,
+      { orderStatus: status },
+      { new: true }
+    ).populate('servicePlan', 'name subtitle price image features category')
+     .populate('servicePlan.category', 'name description image')
+     .populate('userId', 'name email mobile');
+
+    if (!updatedOrder) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found"
+      });
+    }
+
+    // Format the response to match frontend expectations
+    const formattedOrder = {
+      _id: updatedOrder._id,
+      orderId: updatedOrder.orderId,
+      userId: updatedOrder.userId,
+      servicePlan: updatedOrder.servicePlan,
+      amount: updatedOrder.amount,
+      currency: updatedOrder.currency,
+      status: updatedOrder.status,
+      razorpayOrderId: updatedOrder.razorpayOrderId,
+      orderStatus: updatedOrder.orderStatus,
+      customerDetails: updatedOrder.customerDetails,
+      notes: updatedOrder.notes,
+      receipt: updatedOrder.receipt,
+      createdAt: updatedOrder.createdAt,
+      updatedAt: updatedOrder.updatedAt,
+      __v: updatedOrder.__v,
+      bookingDetails: updatedOrder.bookingDetails,
+      razorpayPaymentId: updatedOrder.razorpayPaymentId,
+      razorpaySignature: updatedOrder.razorpaySignature
+    };
+
+    return res.status(200).json({
+      success: true,
+      message: "Order status updated successfully",
+      data: formattedOrder
+    });
+  } catch (error) {
+    console.error("Error updating order status:", error);
+    return res.status(500).json({ 
+      success: false,
+      message: "Internal server error", 
+      error: error.message 
+    });
+  }
+};

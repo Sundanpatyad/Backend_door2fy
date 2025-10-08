@@ -21,6 +21,8 @@ import {
   deleteCategory,
   editCategory,
   getUserOrders,
+  getAllBookings,
+  updateOrderStatus,
   } from '../controllers/serviceController.js';
 import upload from '../middleware/multer.js';
 import { bulkImportServices } from '../repositories/serviceRepository.js';
@@ -74,5 +76,9 @@ router.delete('/deleteCategory/:id', deleteCategory);
 router.put('/editCategory/:id', upload.single("image"), editCategory);
 
 router.get('/userOrders', authenticate, getUserOrders);
+
+router.get('/allBookings', getAllBookings);
+
+router.put('/updateOrderStatus/:id', updateOrderStatus);
 
 export default router;

@@ -3,18 +3,29 @@ import razorpay from '../config/razorpay.js';
 import { ServicePlan } from '../models/serviceModal.js';
 import { Order } from '../models/orderSchema.js';
 import { Payment } from '../models/paymentSchema.js';
+import User from '../models/user.js';
 
 
 // Create Checkout Session
 export const createCheckoutSession = async (req, res) => {
   try {
-    const { servicePlanId, customerDetails } = req.body;
-    const userId = req.user.id; // Assuming auth middleware attaches req.user
+    const { servicePlanId } = req.body;
+    
+    const userId = req.user.id; 
 
-    if (!servicePlanId || !customerDetails) {
+    if (!servicePlanId) {
       return res.status(400).json({
         success: false,
-        message: 'Service plan ID and customer details are required',
+        message: 'Service plan ID is required',
+      });
+    }
+
+    // Fetch user details from the User table
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
       });
     }
 
@@ -44,7 +55,7 @@ export const createCheckoutSession = async (req, res) => {
       },
     });
 
-    // Create order entry in MongoDB
+    // Create order entry in MongoDB using user details from User table
     const order = await Order.create({
       orderId,
       userId,
@@ -54,9 +65,9 @@ export const createCheckoutSession = async (req, res) => {
       status: 'created',
       razorpayOrderId: razorpayOrder.id,
       customerDetails: {
-        name: customerDetails.name,
-        email: customerDetails.email,
-        phone: customerDetails.phone,
+        name: user.name,
+        email: user.email,
+        phone: user.mobile,
       },
       receipt,
       notes: razorpayOrder.notes,

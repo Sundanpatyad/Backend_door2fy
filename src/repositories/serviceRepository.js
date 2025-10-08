@@ -91,6 +91,7 @@ export const getAllServicesRepository = async () => {
         subtitle: 1,
         price: 1,
         features: 1,
+        featuresFormatted: 1,
         planType: '$planDetails.planType',
         category: {
           id: '$categoryDetails._id',
