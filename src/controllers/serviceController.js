@@ -754,6 +754,7 @@ export const editCategory = async (req, res) => {
 export const getUserOrders = async (req, res) => {
   try {
     const userId = req.user.id;
+    console.log(userId , "userId");
 
     // Fetch only orders for the specific user
     const orders = await Order.find({ userId: userId })
