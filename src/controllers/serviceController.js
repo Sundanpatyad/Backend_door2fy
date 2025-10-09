@@ -755,11 +755,11 @@ export const getUserOrders = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    // Fetch only paid orders
-    const orders = await Order.find()
+    // Fetch only orders for the specific user
+    const orders = await Order.find({ userId: userId })
       .populate({
         path: 'servicePlan',
-        select: 'name subtitle price image features category',
+        select: 'name subtitle price image features featuresFormatted category',
         populate: {
           path: 'category',
           select: 'name description image'
@@ -772,7 +772,7 @@ export const getUserOrders = async (req, res) => {
     if (!orders || orders.length === 0) {
       return res.status(200).json({
         success: true,
-        message: 'No paid orders found',
+        message: 'No orders found for this user',
         data: [],
         count: 0
       });
@@ -781,7 +781,7 @@ export const getUserOrders = async (req, res) => {
     // Return orders
     return res.status(200).json({
       success: true,
-      message: 'Paid orders retrieved successfully',
+      message: 'User orders retrieved successfully',
       data: orders,
       count: orders.length
     });
