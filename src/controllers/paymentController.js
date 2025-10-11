@@ -260,7 +260,7 @@ export const getOrderStatus = async (req, res) => {
 export const getUserOrders = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { status, page = 1, limit = 10 } = req.query;
+    const { status = 'paid', page = 1, limit = 10 } = req.query;
 
     const query = { userId };
     if (status) {
